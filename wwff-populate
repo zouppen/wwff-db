@@ -13,7 +13,10 @@ function errx($exit, $msg, ...$va) {
 
 // Load and parse the document
 $http = new HttpHelper();
-$scraper = new Scraper($http->fetch("file:///home/joell/koodaus/wwff-db/ww1011.html"));
+$html = $http->fetch("file:///home/joell/koodaus/wwff-db/ww1011.html");
+$http_error = $http->get_error();
+if ($http_error !== '') errx(4, "Unable to fetch from cluster: %s", $http_error);
+$scraper = new Scraper($html);
 
 // Find the table with the contents. Rows with at least two cells accepted 
 $table = $scraper->query('//table[@style]/tr[td[2]]');

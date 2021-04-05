@@ -51,7 +51,7 @@ class HttpHelper {
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_MAXREDIRS => 5,
-            CURLOPT_VERBOSE => true,
+            CURLOPT_FAILONERROR => 1,
         ];
         if ($cookie_file != null) {
             $opts[CURLOPT_COOKIEFILE] = $cookie_file;
@@ -66,5 +66,9 @@ class HttpHelper {
     function fetch($url) {
         curl_setopt($this->ch, CURLOPT_URL, $url);
         return curl_exec($this->ch);
+    }
+
+    function get_error() {
+        return curl_error($this->ch);
     }
 }
