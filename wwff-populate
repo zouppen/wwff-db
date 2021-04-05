@@ -5,6 +5,12 @@
 require_once __DIR__ . '/scraper.php';
 $utc = new DateTimeZone('UTC');
 
+// Behaves like errx(3) from glibc and BSD
+function errx($exit, $msg, ...$va) {
+    error_log(vsprintf($msg, $va));
+    exit($exit);
+}
+
 // Load and parse the document
 $http = new HttpHelper();
 $scraper = new Scraper($http->fetch("file:///home/joell/koodaus/wwff-db/ww1011.html"));
