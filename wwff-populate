@@ -24,7 +24,7 @@ pg_query($db, 'BEGIN') or errx(3, "Unable to start transaction");
 
 // Load and parse the document
 $http = new HttpHelper();
-$html = $http->fetch("file:///home/joell/koodaus/wwff-db/ww1011.html");
+$html = $http->fetch("https://www.cqgma.org/wwff/ww1011.php");
 $http_error = $http->get_error();
 if ($http_error !== '') errx(4, "Unable to fetch from cluster: %s", $http_error);
 $scraper = new Scraper($html);
