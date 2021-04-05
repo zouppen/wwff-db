@@ -40,7 +40,7 @@ foreach ($table as $tr) {
 
     // $1: Date
     $date_raw = $scraper->queryValue('td[1]', $tr).' '.$scraper->queryValue('td[2]', $tr);
-    $date = DateTime::createFromFormat("d M H i", $date_raw, $utc);
+    $date = DateTime::createFromFormat("d M Hi", $date_raw, $utc);
     array_push($qso, $date->format('c'));
 
     // $2: WWFF park name
