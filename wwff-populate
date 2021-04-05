@@ -1,15 +1,25 @@
 #!/usr/bin/env php
 <?php
-# Requires php-xml, curl
+# Requires php-xml, php-curl, php-pgsql
 
 require_once __DIR__ . '/scraper.php';
 $utc = new DateTimeZone('UTC');
+
+// Postgresql statement used for inserts. See schema.sql for schema.
+$insert_stmt = 'INSERT INTO wwff (ts, park, local, remote, frequency, notes) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id';
 
 // Behaves like errx(3) from glibc and BSD
 function errx($exit, $msg, ...$va) {
     error_log(vsprintf($msg, $va));
     exit($exit);
 }
+
+if ($argc != 2) errx(1, "Usage: %s PG_CONNECTION_STRING", $argv[0]);
+
+// Connect to the database and begin transaction
+$db = pg_connect($argv[1]) or errx(2, "Database error");
+pg_prepare($db, 'insert', $insert_stmt) or errx(2, "Unable to prepare statement, missing tables?");
+pg_query($db, 'BEGIN') or errx(3, "Unable to start transaction");
 
 // Load and parse the document
 $http = new HttpHelper();
@@ -27,26 +37,29 @@ foreach ($table as $tr) {
     
     $qso = [];
 
-    // Date
+    // $1: Date
     $date_raw = $scraper->queryValue('td[1]', $tr).' '.$scraper->queryValue('td[2]', $tr);
     $date = DateTime::createFromFormat("d M H i", $date_raw, $utc);
-    $qso['ts'] = $date->format('c');
-    
-    // Frequency, kHz
-    $qso['freq'] = floatval($scraper->queryValue('td[3]', $tr));
+    array_push($qso, $date->format('c'));
 
-    // Activator callsign (person at park)
-    $qso['local'] = $scraper->queryValue('td[5]//b', $tr);
+    // $2: WWFF park name
+    array_push($qso, $scraper->queryValue('(td[5]//a)[2]', $tr));
 
-    // WWFF park name
-    $qso['park'] = $scraper->queryValue('(td[5]//a)[2]', $tr);
+    // $4: Activator callsign (person at park)
+    array_push($qso, $scraper->queryValue('td[5]//b', $tr));
 
-    // Remote callsign
-    $qso['remote'] = $scraper->queryValue('(td[5]//a)[4]', $tr);
+    // $5: Remote callsign
+    array_push($qso, $scraper->queryValue('(td[5]//a)[4]', $tr));
 
-    // Notes
-    $qso['notes'] = trim($scraper->queryValue('(.//td)[10]', $tr), ' ');
+    // $3: Frequency, kHz
+    array_push($qso, floatval($scraper->queryValue('td[3]', $tr)));
+
+    // $6: Notes
+    array_push($qso, trim($scraper->queryValue('(.//td)[10]', $tr), ' '));
 
     // Populate database
-    var_dump($qso); // TODO
+    $res = pg_execute($db, 'insert', $qso);
+    if ($res === false) errx(3, "Unable to insert to database");
 }
+
+pg_query($db, 'END') or errx(3, "Unable to commit to database");
