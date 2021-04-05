@@ -46,13 +46,13 @@ foreach ($table as $tr) {
     // $2: WWFF park name
     array_push($qso, $scraper->queryValue('(td[5]//a)[2]', $tr));
 
-    // $4: Activator callsign (person at park)
+    // $3: Activator callsign (person at park)
     array_push($qso, $scraper->queryValue('td[5]//b', $tr));
 
-    // $5: Remote callsign
+    // $4: Remote callsign
     array_push($qso, $scraper->queryValue('(td[5]//a)[4]', $tr));
 
-    // $3: Frequency, kHz
+    // $5: Frequency, kHz
     array_push($qso, floatval($scraper->queryValue('td[3]', $tr)));
 
     // $6: Notes
