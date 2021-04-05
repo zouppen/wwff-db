@@ -1,0 +1,43 @@
+#!/usr/bin/env php
+<?php
+# Requires php-xml, curl
+
+require_once __DIR__ . '/scraper.php';
+$utc = new DateTimeZone('UTC');
+
+// Load and parse the document
+$http = new HttpHelper();
+$scraper = new Scraper($http->fetch("file:///home/joell/koodaus/wwff-db/ww1011.html"));
+
+// Find the table with the contents. Rows with at least two cells accepted 
+$table = $scraper->query('//table[@style]/tr[td[2]]');
+
+foreach ($table as $tr) {
+    // Scraper debugging tip:
+    // print($scraper->dump($tr));
+    
+    $qso = [];
+
+    // Date
+    $date_raw = $scraper->queryValue('td[1]', $tr).' '.$scraper->queryValue('td[2]', $tr);
+    $date = DateTime::createFromFormat("d M H i", $date_raw, $utc);
+    $qso['ts'] = $date->format('c');
+    
+    // Frequency, kHz
+    $qso['freq'] = floatval($scraper->queryValue('td[3]', $tr));
+
+    // Activator callsign (person at park)
+    $qso['local'] = $scraper->queryValue('td[5]//b', $tr);
+
+    // WWFF park name
+    $qso['park'] = $scraper->queryValue('(td[5]//a)[2]', $tr);
+
+    // Remote callsign
+    $qso['remote'] = $scraper->queryValue('(td[5]//a)[4]', $tr);
+
+    // Notes
+    $qso['notes'] = trim($scraper->queryValue('(.//td)[10]', $tr), ' ');
+
+    // Populate database
+    var_dump($qso); // TODO
+}
