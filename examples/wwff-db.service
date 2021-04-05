@@ -1,0 +1,12 @@
+[Unit]
+Description=Update WWFF cluster data
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=USER
+Group=GROUP
+ExecStart=/PATH/TO/wwff-populate
+
+# Usually takes only seconds.
+TimeoutSec=2m

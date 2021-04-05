@@ -1,0 +1,9 @@
+[Unit]
+Description=Update WWFF cluster data periodically
+
+[Timer]
+OnUnitActiveSec=10m
+OnBootSec=0s
+
+[Install]
+WantedBy=timers.target
