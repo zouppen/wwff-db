@@ -4,6 +4,7 @@
 
 require_once __DIR__ . '/scraper.php';
 $utc = new DateTimeZone('UTC');
+$ids = [];
 
 // Postgresql statement used for inserts. See schema.sql for schema.
 $insert_stmt = 'INSERT INTO wwff (ts, park, local, remote, frequency, notes) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id';
@@ -60,6 +61,13 @@ foreach ($table as $tr) {
     // Populate database
     $res = pg_execute($db, 'insert', $qso);
     if ($res === false) errx(3, "Unable to insert to database");
+
+    // Collect ids for log files
+    $arr = pg_fetch_array($res);
+    if ($arr !== false) array_push($ids, $arr['id']);
 }
 
 pg_query($db, 'END') or errx(3, "Unable to commit to database");
+
+// Just for logging.
+printf("New items %d / %d. New IDs: %s\n", count($ids), count($table), json_encode($ids));
