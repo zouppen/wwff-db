@@ -1,6 +1,7 @@
 # WWFF cluster database
 
-It reads the file https://www.cqgma.org/wwff/ww1011.php and writes to
+Reads radio amateur [World Wide Flora & Fauna](https://wwff.co/)
+cluster data from https://www.cqgma.org/wwff/ww1011.php and writes to
 a PostgreSQL database.
 
 Written by OH64K / Zouppen.
@@ -29,8 +30,8 @@ Try to run the tool once:
 
 If it works it's time to make it periodic. Install systemd timer and
 service to `/etc/systemd/system` or your user instance, if you have
-one. See example files [examples/wwff-db.service] and
-[examples/wwff-db.timer].
+one. See examples for [service](examples/wwff-db.service) and
+[timer](examples/wwff-db.timer) files.
 
 Works with legacy cron, too.
 
