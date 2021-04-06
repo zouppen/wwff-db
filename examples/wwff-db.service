@@ -7,7 +7,8 @@ After=postgresql.service
 Type=oneshot
 User=USER
 Group=GROUP
-ExecStart=/PATH/TO/wwff-populate "dbname=MY_DATABASE_NAME"
+ExecStart=/PATH/TO/wwff-populate
+#ExecStart=/PATH/TO/notifier
 
 # Usually takes only seconds.
 TimeoutSec=2m

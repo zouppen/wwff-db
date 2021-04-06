@@ -23,7 +23,9 @@ psql -f schema.sql "dbname=MY_DATABASE_NAME"
 ```
 
 Copy example configuration `cp settings.conf.example settings.conf`
-and edit it.
+and edit it. If you just want to populate database but don't need to
+use notifier, just leave `[filter]` and `[matrix]` sections
+unconfigured.
 
 In both data collection and notification tools, configuration file
 location defaults to `settings.conf` in the tool directory. You may
@@ -41,6 +43,19 @@ one. See examples for [service](examples/wwff-db.service) and
 [timer](examples/wwff-db.timer) files.
 
 Works with legacy cron, too.
+
+## Notifier
+
+Notifier, `./notifier`, is a separate tool which can be run in the
+same systemd service. Just uncomment that line in the example systemd
+service file and also remember to set Matrix settings in the
+configuration file.
+
+With mautrix-telegram, mautrix-whatsapp and IRC bridging you can get
+the bot to notify to wide variety of different chat platforms at once!
+
+Please note on the first run it may spam a lot. Set up proper filter
+and run on a test channel first!
 
 ## License
 
