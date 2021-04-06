@@ -67,7 +67,11 @@ foreach ($table as $tr) {
     array_push($qso, trim($scraper->queryValue('(.//td)[10]', $tr), ' '));
 
     // Site info. Dig data from onmouseover tooltip embedded HTML.
-    $tooltip_html = $scraper->queryValue('(td[5]//a)[2]/@onmouseover', $tr);
+    $tooltip_raw = $scraper->queryValue('(td[5]//a)[2]/@onmouseover', $tr);
+    // Take quotes off
+    $tooltip_html = preg_replace_callback('/\\\\(.)/', function ($matches) {
+        return $matches[1];
+    }, $tooltip_raw);
     $tip_scraper = new Scraper($utf8_fluff . $tooltip_html);
     $facts_dom = $tip_scraper->query('//table/tr');
     $facts = [];
