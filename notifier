@@ -1,0 +1,65 @@
+#!/usr/bin/env php
+<?php
+# Requires php-xml, php-curl, php-pgsql
+
+require_once __DIR__ . '/helpers.php';
+
+// Config file
+$conffile = array_key_exists(1, $argv) ? $argv[1] : __DIR__.'/settings.conf';
+$conf = parse_ini_file($conffile, TRUE) or errx(1, "Configuration file %s is invalid", $conffile);
+
+$db = pg_connect($conf['pg_connect']) or errx(2, "Database error");
+$age_esc = pg_escape_string($conf['age']);
+pg_prepare($db, 'query', <<<EOF
+SELECT DISTINCT ON (park)
+    a.park,
+    local,
+    info->>'wwff' AS name,
+    info->>'locator' AS locator
+FROM wwff a
+LEFT JOIN wwff_park p ON a.park=p.park
+WHERE a.park LIKE $1 AND COALESCE(ts > (
+    SELECT ts+interval '$age_esc'
+    FROM wwff_notify n
+    WHERE n.park=a.park
+    ORDER BY n.ts DESC
+    LIMIT 1
+),true)
+ORDER BY park, ts DESC
+EOF) or errx(2, "Unable to prepare statement, missing tables?");
+pg_prepare($db, 'mark', <<<'EOF'
+INSERT INTO wwff_notify (park)
+VALUES ($1)
+EOF) or errx(2, "Unable to prepare statement, missing tables?");
+pg_query($db, 'BEGIN') or errx(3, "Unable to start transaction");
+
+$res = pg_execute($db, 'query', [$conf['filter']]);
+if ($res === false) errx(3, "Unable to query database");
+
+while (false !== ($o = pg_fetch_assoc($res))) {
+    // Plain text notification
+    $url = "https://aprs.fi/#!addr={$o['locator']}";
+    $plain = sprintf('%s saapui aktivoimaan kohdetta %s (%s) %s',
+                     $o['local'], $o['park'], $o['name'], $url);
+
+    $dom = new DOMDocument('1.0', 'UTF-8');
+    $dom->appendChild($dom->createTextNode("{$o['local']} saapui aktivoimaan kohdetta "));
+    $park = $dom->createElement('strong');
+    $park->appendChild($dom->createTextNode($o['park']));
+    $dom->appendChild($park);
+    $dom->appendChild($dom->createTextNode(' '.$o['name'].', '));
+    $loc = $dom->createElement('a');
+    $loc->setAttribute('href', $url);
+    $loc->appendChild($dom->createTextNode($o['locator']));
+    $dom->appendChild($loc);
+    
+    // Matrix notification
+    // TODO
+    var_dump($plain);
+    var_dump($dom->saveHTML());
+
+    // Mark as notified
+    pg_execute($db, 'mark', [$o['park']]) or errx(3, "Unable to mark notification to db");
+}
+
+pg_query($db, 'END') or errx(3, "Unable to commit to database");

@@ -1,1 +1,6 @@
+; PostgreSQL connection string
 pg_connect = "dbname=MY_DATABASE_NAME"
+; LIKE filter. Use "%" for all, "OH%" to get only Finnish ones
+filter = "%"
+; Do not notify about the same park again in given time
+age = "6 hours"
