@@ -22,10 +22,17 @@ Create database from the schema:
 psql -f schema.sql "dbname=MY_DATABASE_NAME"
 ```
 
-Try to run the tool once:
+Copy example configuration `cp settings.conf.example settings.conf`
+and edit it.
+
+In both data collection and notification tools, configuration file
+location defaults to `settings.conf` in the tool directory. You may
+override it by passing it as a argument to individual tools.
+
+Try to run the tool once.
 
 ```sh
-./wwff-populate "dbname=MY_DATABASE_NAME"
+./wwff-populate
 ```
 
 If it works it's time to make it periodic. Install systemd timer and

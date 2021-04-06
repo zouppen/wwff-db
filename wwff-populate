@@ -2,6 +2,7 @@
 <?php
 # Requires php-xml, php-curl, php-pgsql
 
+require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/scraper.php';
 $utc = new DateTimeZone('UTC');
 $utf8_fluff = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
@@ -12,16 +13,12 @@ $halfaway = (new DateTime())->modify('+6 months');
 $insert_stmt = 'INSERT INTO wwff (ts, park, local, remote, frequency, notes) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id';
 $insert_park_stmt = 'INSERT into wwff_park (park, info) VALUES ($1, $2) ON CONFLICT (park) DO UPDATE SET info = EXCLUDED.info';
 
-// Behaves like errx(3) from glibc and BSD
-function errx($exit, $msg, ...$va) {
-    error_log(vsprintf($msg, $va));
-    exit($exit);
-}
-
-if ($argc != 2) errx(1, "Usage: %s PG_CONNECTION_STRING", $argv[0]);
+// Config file
+$conffile = array_key_exists(1, $argv) ? $argv[1] : __DIR__.'/settings.conf';
+$conf = parse_ini_file($conffile, TRUE) or errx(1, "Configuration file %s is invalid", $conffile);
 
 // Connect to the database and begin transaction
-$db = pg_connect($argv[1]) or errx(2, "Database error");
+$db = pg_connect($conf['pg_connect']) or errx(2, "Database error");
 pg_prepare($db, 'insert', $insert_stmt) or errx(2, "Unable to prepare statement, missing tables?");
 pg_prepare($db, 'park', $insert_park_stmt) or errx(2, "Unable to prepare statement, missing tables?");
 pg_query($db, 'BEGIN') or errx(3, "Unable to start transaction");
