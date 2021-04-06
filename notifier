@@ -3,13 +3,16 @@
 # Requires php-xml, php-curl, php-pgsql
 
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/matrix.php';
 
 // Config file
 $conffile = array_key_exists(1, $argv) ? $argv[1] : __DIR__.'/settings.conf';
 $conf = parse_ini_file($conffile, TRUE) or errx(1, "Configuration file %s is invalid", $conffile);
 
+$matrix = new Matrix($conf['matrix']['homeserver'], $conf['matrix']['token']);
+
 $db = pg_connect($conf['pg_connect']) or errx(2, "Database error");
-$age_esc = pg_escape_string($conf['age']);
+$age_esc = pg_escape_string($conf['filter']['age']);
 pg_prepare($db, 'query', <<<EOF
 SELECT DISTINCT ON (park)
     a.park,
@@ -33,7 +36,7 @@ VALUES ($1)
 EOF) or errx(2, "Unable to prepare statement, missing tables?");
 pg_query($db, 'BEGIN') or errx(3, "Unable to start transaction");
 
-$res = pg_execute($db, 'query', [$conf['filter']]);
+$res = pg_execute($db, 'query', [$conf['filter']['like']]);
 if ($res === false) errx(3, "Unable to query database");
 
 while (false !== ($o = pg_fetch_assoc($res))) {
@@ -43,7 +46,11 @@ while (false !== ($o = pg_fetch_assoc($res))) {
                      $o['local'], $o['park'], $o['name'], $url);
 
     $dom = new DOMDocument('1.0', 'UTF-8');
-    $dom->appendChild($dom->createTextNode("{$o['local']} saapui aktivoimaan kohdetta "));
+    $dom->appendChild($dom->createTextNode('📻 '));
+    $call = $dom->createElement('strong');
+    $call->appendChild($dom->createTextNode($o['local']));
+    $dom->appendChild($call);
+    $dom->appendChild($dom->createTextNode(' saapui aktivoimaan kohdetta 🌲'));
     $park = $dom->createElement('strong');
     $park->appendChild($dom->createTextNode($o['park']));
     $dom->appendChild($park);
@@ -54,9 +61,7 @@ while (false !== ($o = pg_fetch_assoc($res))) {
     $dom->appendChild($loc);
     
     // Matrix notification
-    // TODO
-    var_dump($plain);
-    var_dump($dom->saveHTML());
+    $matrix->notice($conf['matrix']['room'], $plain, $dom);
 
     // Mark as notified
     pg_execute($db, 'mark', [$o['park']]) or errx(3, "Unable to mark notification to db");

@@ -1,6 +1,16 @@
 ; PostgreSQL connection string
 pg_connect = "dbname=MY_DATABASE_NAME"
+
+[filter]
 ; LIKE filter. Use "%" for all, "OH%" to get only Finnish ones
-filter = "%"
+like = "%"
 ; Do not notify about the same park again in given time
-age = "6 hours"
+age = "8 hours"
+
+[matrix]
+; Home server with protocol (and port, if not default)
+homeserver = "https://matrix.example.com"
+; Access token
+token = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+; Matrix room ID (starts with !)
+room = "!RtlwJVOHzddeloiByq:liittovaltio.fi"
