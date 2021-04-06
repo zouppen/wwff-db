@@ -11,10 +11,10 @@ class Matrix {
         $this->ch = curl_init();
         curl_setopt_array($this->ch, [
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_FOLLOWLOCATION => TRUE,
+            CURLOPT_FOLLOWLOCATION => 1,
+            CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_CUSTOMREQUEST => 'PUT',
-            CURLOPT_VERBOSE => TRUE,
-            CURLOPT_FAILONERROR => TRUE,
+            CURLOPT_FAILONERROR => 1,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',
@@ -47,5 +47,9 @@ class Matrix {
         ]);
 
         return curl_exec($this->ch);
+    }
+
+    function get_error() {
+        return curl_error($this->ch);
     }
 }
