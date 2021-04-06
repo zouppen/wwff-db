@@ -61,7 +61,14 @@ while (false !== ($o = pg_fetch_assoc($res))) {
     $dom->appendChild($loc);
     
     // Matrix notification
-    $matrix->notice($conf['matrix']['room'], $plain, $dom);
+    $out = $matrix->notice($conf['matrix']['room'], $plain, $dom);
+    $error = $matrix->get_error();
+    if ($error !== '') {
+        // Warn and go on, just don't mark the target as notified
+        warnx("Unable to post to Matrix: %s", $error);
+        continue;
+    }
+    print("$out\n");
 
     // Mark as notified
     pg_execute($db, 'mark', [$o['park']]) or errx(3, "Unable to mark notification to db");
