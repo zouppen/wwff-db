@@ -4,6 +4,7 @@
 
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/matrix.php';
+require_once __DIR__ . '/bandify.php';
 
 // Config file
 $conffile = array_key_exists(1, $argv) ? $argv[1] : __DIR__.'/settings.conf';
@@ -17,6 +18,7 @@ pg_prepare($db, 'query', <<<EOF
 SELECT DISTINCT ON (park)
     a.park,
     local,
+    frequency,
     info->>'wwff' AS name,
     info->>'locator' AS locator
 FROM wwff a
@@ -42,8 +44,9 @@ if ($res === false) errx(3, "Unable to query database");
 while (false !== ($o = pg_fetch_assoc($res))) {
     // Plain text notification
     $url = "https://aprs.fi/#!addr={$o['locator']}";
-    $plain = sprintf('%s saapui aktivoimaan kohdetta %s (%s) %s',
-                     $o['local'], $o['park'], $o['name'], $url);
+    $band = to_band($o['frequency']).':llä';
+    $plain = sprintf('%s saapui aktivoimaan kohdetta %s (%s) %s %s',
+                     $o['local'], $o['park'], $o['name'], $band, $url);
 
     $dom = new DOMDocument('1.0', 'UTF-8');
     $dom->appendChild($dom->createTextNode('📻 '));
@@ -54,7 +57,7 @@ while (false !== ($o = pg_fetch_assoc($res))) {
     $park = $dom->createElement('strong');
     $park->appendChild($dom->createTextNode($o['park']));
     $dom->appendChild($park);
-    $dom->appendChild($dom->createTextNode(' '.$o['name'].', '));
+    $dom->appendChild($dom->createTextNode(' '.$o['name'].' '.$band.', '));
     $loc = $dom->createElement('a');
     $loc->setAttribute('href', $url);
     $loc->appendChild($dom->createTextNode($o['locator']));
