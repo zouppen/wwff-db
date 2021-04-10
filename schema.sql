@@ -11,6 +11,7 @@ CREATE TABLE wwff (
 );
 
 CREATE UNIQUE INDEX ON wwff (ts, park, local, remote, frequency);
+CREATE INDEX ON wwff (park, ts);
 
 CREATE TABLE wwff_park (
     park text PRIMARY KEY,
@@ -23,3 +24,5 @@ CREATE TABLE wwff_notify (
     park text NOT NULL,
     instance text NOT NULL
 );
+
+CREATE INDEX ON wwff_notify(instance, park, ts DESC);
