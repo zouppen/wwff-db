@@ -2,6 +2,8 @@
 pg_connect = "dbname=MY_DATABASE_NAME"
 
 [filter]
+; Instance name. If you have different filters, use different instance name for each
+name = 'production'
 ; LIKE filter. Use "%" for all, "OH%" to get only Finnish ones
 like = "%"
 ; Do not notify about the same park again in given time

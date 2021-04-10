@@ -20,5 +20,6 @@ CREATE TABLE wwff_park (
 CREATE TABLE wwff_notify (
     id serial PRIMARY KEY,
     ts timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    park text NOT NULL
+    park text NOT NULL,
+    instance text NOT NULL
 );
