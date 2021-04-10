@@ -23,7 +23,9 @@ SELECT DISTINCT ON (park)
     info->>'locator' AS locator
 FROM wwff a
 LEFT JOIN wwff_park p ON a.park=p.park
-WHERE a.park LIKE $1 AND COALESCE(ts > (
+WHERE a.park LIKE $1
+  AND info->>'wwff' IS NOT NULL
+  AND COALESCE(ts > (
     SELECT ts+interval '$age_esc'
     FROM wwff_notify n
     WHERE n.park=a.park
