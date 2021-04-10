@@ -25,8 +25,8 @@ FROM wwff a
 LEFT JOIN wwff_park p ON a.park=p.park
 WHERE a.park LIKE $1
   AND info->>'wwff' IS NOT NULL
-  AND COALESCE(ts > (
-    SELECT ts+interval '$age_esc'
+  AND COALESCE(ts-interval '$age_esc' > (
+    SELECT ts
     FROM wwff_notify n
     WHERE n.park=a.park
       AND n.instance=$2
