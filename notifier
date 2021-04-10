@@ -24,6 +24,9 @@ SELECT DISTINCT ON (park)
 FROM wwff a
 LEFT JOIN wwff_park p ON a.park=p.park
 WHERE a.park LIKE $1
+  -- To reduce spam in case of an error (too wide filter)
+  AND ts > CURRENT_TIMESTAMP-interval '1 day'
+  -- To remove non-existing parks (typos in park names)
   AND info->>'wwff' IS NOT NULL
   AND COALESCE(ts-interval '$age_esc' > (
     SELECT ts
