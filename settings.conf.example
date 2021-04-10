@@ -1,5 +1,6 @@
 ; PostgreSQL connection string
 pg_connect = "dbname=MY_DATABASE_NAME"
+;read_only = false;
 
 [filter]
 ; Instance name. If you have different filters, use different instance name for each
@@ -9,6 +10,7 @@ like = "%"
 ; Do not notify about the same park again in given time
 age = "8 hours"
 
+; If you just want to print to stdout, remove or comment out this section
 [matrix]
 ; Home server with protocol (and port, if not default)
 homeserver = "https://matrix.example.com"

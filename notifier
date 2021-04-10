@@ -10,7 +10,12 @@ require_once __DIR__ . '/bandify.php';
 $conffile = array_key_exists(1, $argv) ? $argv[1] : __DIR__.'/settings.conf';
 $conf = parse_ini_file($conffile, TRUE) or errx(1, "Configuration file %s is invalid", $conffile);
 
-$matrix = new Matrix($conf['matrix']['homeserver'], $conf['matrix']['token']);
+if (array_key_exists('matrix', $conf)) {
+    $matrix = new Matrix($conf['matrix']['homeserver'], $conf['matrix']['token']);
+} else {
+    $matrix = null;
+    print("Matrix section not defined in configuration, reporting to stdout.\n\n");
+}
 
 $db = pg_connect($conf['pg_connect']) or errx(2, "Database error");
 $age_esc = pg_escape_string($conf['filter']['age']);
@@ -70,17 +75,26 @@ while (false !== ($o = pg_fetch_assoc($res))) {
     $dom->appendChild($loc);
     
     // Matrix notification
-    $out = $matrix->notice($conf['matrix']['room'], $plain, $dom);
-    $error = $matrix->get_error();
-    if ($error !== '') {
-        // Warn and go on, just don't mark the target as notified
-        warnx("Unable to post to Matrix: %s", $error);
-        continue;
+    if ($matrix) {
+        $out = $matrix->notice($conf['matrix']['room'], $plain, $dom);
+        $error = $matrix->get_error();
+        if ($error !== '') {
+            // Warn and go on, just don't mark the target as notified
+            warnx("Unable to post to Matrix: %s", $error);
+            continue;
+        }
+        print("$out\n");
+    } else {
+        print($plain."\n");
+        print($dom->saveHTML()."\n");
     }
-    print("$out\n");
 
     // Mark as notified
     pg_execute($db, 'mark', [$o['park'], $conf['filter']['name']]) or errx(3, "Unable to mark notification to db");
 }
 
-pg_query($db, 'END') or errx(3, "Unable to commit to database");
+if (@$conf['read_only']) {
+    print("Read-only database requested, not storing sent notifications.\n");
+} else {
+    pg_query($db, 'END') or errx(3, "Unable to commit to database");
+}
