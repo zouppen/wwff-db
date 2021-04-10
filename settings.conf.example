@@ -1,6 +1,7 @@
 ; PostgreSQL connection string
 pg_connect = "dbname=MY_DATABASE_NAME"
 ;read_only = false;
+;source = file:///path/to/ww1011-test.html
 
 [filter]
 ; Instance name. If you have different filters, use different instance name for each

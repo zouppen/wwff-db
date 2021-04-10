@@ -25,7 +25,7 @@ pg_query($db, 'BEGIN') or errx(3, "Unable to start transaction");
 
 // Load and parse the document
 $http = new HttpHelper();
-$html = $http->fetch("https://www.cqgma.org/wwff/ww1011.php");
+$html = $http->fetch(@$conf["source"] ?? 'https://www.cqgma.org/wwff/ww1011.php');
 $http_error = $http->get_error();
 if ($http_error !== '') errx(4, "Unable to fetch from cluster: %s", $http_error);
 $scraper = new Scraper($html);
@@ -91,7 +91,11 @@ foreach ($table as $tr) {
     if ($res === false) errx(3, "Unable to insert park data to database");
 }
 
-pg_query($db, 'END') or errx(3, "Unable to commit to database");
+if (@$conf['read_only']) {
+    print("Read-only database requested, not storing sent notifications.\n");
+} else {
+    pg_query($db, 'END') or errx(3, "Unable to commit to database");
+}
 
 // Just for logging.
 printf("New items %d / %d. New IDs: %s\n", count($ids), count($table), json_encode($ids));
