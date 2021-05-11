@@ -4,13 +4,52 @@
 
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/scraper.php';
-$utc = new DateTimeZone('UTC');
+
+function mktime_year(&$d, $year)
+{
+    return mktime($d['tm_hour'], $d['tm_min'], $d['tm_sec'], $d['tm_mon']+1, $d['tm_mday'], $year);
+}
+
+// Takes strptime output, fills in the year (nearest point to current
+// time) and returns its UNIX timestamp.
+function mktime_nearest_year(&$d)
+{
+    global $now;
+    $year = getdate($now)['year'];
+    $nearest = PHP_INT_MAX;
+
+    // Take this, next and previous years and try to check which is
+    // nearest to current timestamp. This eliminates clock errors near
+    // year changes.
+    foreach ([
+        mktime_year($d, $year-1),
+        mktime_year($d, $year),
+        mktime_year($d, $year+1)
+    ] as $candidate) {
+        $comp = abs($now - $candidate);
+        if ($comp < $nearest) {
+            $nearest = $comp;
+            $ts = $candidate;
+        }
+    }
+
+    return $ts;
+}
+
+// Parsing date formats in UTC time zone AND German month names!
+// Special ghost protocol engaged!
+date_default_timezone_set('UTC');
+if (setlocale(LC_TIME, 'de_DE.UTF-8') === false) {
+    errx(2, "German locale required for scraping. Add de_DE.UTF-8 to the list of available locales");
+}
+// Take current time, same timestamp is as a reference point for all data.
+$now = time();
+
 $utf8_fluff = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
 $ids = [];
-$halfaway = (new DateTime())->modify('+6 months');
 
 // Postgresql statement used for inserts. See schema.sql for schema.
-$insert_stmt = 'INSERT INTO wwff (ts, park, local, remote, frequency, notes) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id';
+$insert_stmt = 'INSERT INTO wwff (ts, park, local, remote, frequency, notes) VALUES (to_timestamp($1), $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING RETURNING id';
 $insert_park_stmt = 'INSERT into wwff_park (park, info) VALUES ($1, $2) ON CONFLICT (park) DO UPDATE SET info = EXCLUDED.info';
 
 // Config file
@@ -41,11 +80,8 @@ foreach ($table as $tr) {
 
     // $1: Date
     $date_raw = $scraper->queryValue('td[1]', $tr).' '.$scraper->queryValue('td[2]', $tr);
-    $date = DateTime::createFromFormat("d M Hi", $date_raw, $utc);
-    // Original date has no year. Make sure the date refers to nearest
-    // point in time.
-    if ($date > $halfaway) $date->modify('-1 year');
-    array_push($qso, $date->format('c'));
+    $date_r = strptime($date_raw, '%d %b %H%M');
+    array_push($qso, mktime_nearest_year($date_r));
 
     // $2: WWFF park name
     $park = $scraper->queryValue('(td[5]//a)[2]', $tr);

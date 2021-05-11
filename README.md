@@ -16,6 +16,12 @@ running by a timer.
 
 ## Installation
 
+Since the cluster data has German month names, you need to compile
+German locales for this to work. On Debian and compatible
+distributions, just run `dpkg-reconfigure locales` and add
+`de_DE.utf8`. You can keep your system default locale since this
+script handles the run-time locale setting.
+
 Create database from the schema:
 
 ```sh
